@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Global Site Tag Tracking
-Version: 1.0.1
+Version: 1.0.2
 Plugin URI: https://noorsplugin.com/global-site-tag-tracking-plugin-for-wordpress/
 Author: naa986
 Author URI: https://noorsplugin.com/
@@ -17,7 +17,7 @@ if (!class_exists('GLOBAL_SITE_TAG_TRACKING')) {
 
     class GLOBAL_SITE_TAG_TRACKING {
 
-        var $plugin_version = '1.0.1';
+        var $plugin_version = '1.0.2';
 
         function __construct() {
             define('GLOBAL_SITE_TAG_TRACKING_VERSION', $this->plugin_version);
@@ -40,8 +40,9 @@ if (!class_exists('GLOBAL_SITE_TAG_TRACKING')) {
         }
 
         function plugin_url() {
-            if ($this->plugin_url)
+            if ($this->plugin_url){
                 return $this->plugin_url;
+            }
             return $this->plugin_url = plugins_url(basename(plugin_dir_path(__FILE__)), basename(__FILE__));
         }
 
@@ -75,10 +76,14 @@ if (!class_exists('GLOBAL_SITE_TAG_TRACKING')) {
                 );
         }
         function tracking_id_render() { 
-            $options = get_option('global_site_tag_tracking_settings');            
+            $options = get_option('global_site_tag_tracking_settings'); 
+            $tracking_id = '';
+            if(isset($options['tracking_id']) && !empty($options['tracking_id'])){
+                $tracking_id = $options['tracking_id'];
+            }
             ?>
-            <input type='text' name='global_site_tag_tracking_settings[tracking_id]' value='<?php echo $options['tracking_id']; ?>'>
-            <p class="description"><?php printf(__('Enter your Global Site Tag (Google Analytics) Tracking ID for this website (e.g %s).', 'global-site-tag-tracking'), 'UA-35118216-1');?></p>
+            <input type='text' name='global_site_tag_tracking_settings[tracking_id]' value='<?php echo esc_attr($tracking_id); ?>'>
+            <p class="description"><?php printf(__('Enter your Global Site Tag (Google Analytics) Tracking ID for this website (e.g %s).', 'global-site-tag-tracking'), 'G-68KH052TFT');?></p>
             <?php
         }
         function global_site_tag_tracking_settings_section_callback() { 
@@ -116,17 +121,21 @@ if (!class_exists('GLOBAL_SITE_TAG_TRACKING')) {
         function add_tracking_code() {
             if(!$this->is_logged_in()) {
                 $options = get_option( 'global_site_tag_tracking_settings' );
-                $tracking_id = $options['tracking_id'];
+                $tracking_id = '';
+                if(isset($options['tracking_id']) && !empty($options['tracking_id'])){
+                    $tracking_id = $options['tracking_id'];
+                }
+                $esc_js = 'esc_js';
                 if(isset($tracking_id) && !empty($tracking_id)){
                     $ouput = <<<EOT
                     <!-- Tracking code generated with Global Site Tag Tracking plugin v{$this->plugin_version} -->
-                    <script async src="https://www.googletagmanager.com/gtag/js?id=$tracking_id"></script>
+                    <script async src="https://www.googletagmanager.com/gtag/js?id={$esc_js($tracking_id)}"></script>
                     <script>
                       window.dataLayer = window.dataLayer || [];
                       function gtag(){dataLayer.push(arguments);}
                       gtag('js', new Date());
 
-                      gtag('config', '$tracking_id');
+                      gtag('config', '{$esc_js($tracking_id)}');
                     </script>      
                     <!-- / Global Site Tag Tracking plugin -->
 EOT;
